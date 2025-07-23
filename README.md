@@ -1,66 +1,46 @@
-## Foundry
+# 🧱 solidity-design-patterns
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+A curated collection of real-world Solidity design patterns — tested, explained, and chaos-architected by _qTee_. 🐱‍👤✨
 
-Foundry consists of:
+## 💡 What’s Inside
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+Each pattern has:
 
-## Documentation
+- 🧠 Notes and explanations (in its own `README.md`)
+- 🧪 A working Solidity implementation
+- ✅ Foundry tests
+- 🚀 A deploy script (if needed)
 
-https://book.getfoundry.sh/
+> Inspired by [dragonfly-xyz/useful-solidity-patterns](https://github.com/dragonfly-xyz/useful-solidity-patterns) but written from scratch, reorganized for clarity, and expanded with personal insights.
 
-## Usage
+---
 
-### Build
+## 📦 Patterns
 
-```shell
-$ forge build
-```
+- 🏭 `factory/`
+- 🗂️ `registry/`
+- 🔐 `access-control/`
+- 🧾 `proxy/`
+- 💸 `pull-payment/`
+- 🧩 `adapter/`
+- 🔮 `oracle/`
+- 🌀 `state-machine/` _(coming soon)_
 
-### Test
+---
 
-```shell
-$ forge test
-```
+## 🧰 Tooling
 
-### Format
+This repo uses [Foundry](https://book.getfoundry.sh/) for testing, scripting, and fast iteration.
 
-```shell
-$ forge fmt
-```
+```bash
+# setup
+forge install
+anvil
 
-### Gas Snapshots
+# run tests
+forge test
 
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
+# run deploy script (optional)
+source .env
+forge script script/DeployFactory.s.sol --rpc-url $RPC_URL
 ```
