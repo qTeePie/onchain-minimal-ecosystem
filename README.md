@@ -28,6 +28,19 @@ Each pattern has:
 
 ---
 
+## 🎁 Future add-ons
+
+This repo is part of a larger hybrid goal:  
+to go beyond learning Solidity patterns — and build the foundations for applying **formal verification** and **zero-knowledge proof** techniques to smart contract security.
+
+For each pattern, the long-term goal is to document:
+
+- ✅ **Invariants** — conditions that should always hold true
+- 🔍 **Fuzz and property-based tests** — to catch edge cases and verify logic
+- 🔒 **ZK-modeling notes** — outlining how the pattern’s core logic could be expressed inside a zk circuit or formal logic system
+
+---
+
 ## 🧰 Tooling
 
 This repo uses [Foundry](https://book.getfoundry.sh/) for testing, scripting, and fast iteration.
