@@ -9,19 +9,46 @@ A classic example of this pattern in the blockchain realm is `UniswapV2Factory`,
 
 The factory example implemented here is inspired by **Uniswap** 🦄, a factory contract deploying a minimal pair comtract, using CREATE2 to deploy at a predictable address. 🚀
 
+## ✨ Benefits
+
+- Efficient mass deployment of similar contracts.
+- Predictability in deployment logic.
+
+## ⚠️ Tradeoffs
+
+- CREATE2 introduces predictability, which is both a feature and a risk (more in this below.)
+
 ---
 
 ### CREATE2 Considerations
 
 While `CREATE2` is incredibly useful for predictable address deployment, it comes with its own caveats and risks.
 
+---
+
+### 💰 Pre-funding
+
+> ❗ Attack: An attacker sends ETH or tokens to your `CREATE2` address before it’s deployed.
+
+---
+
+#### 🥪 Front-Running Your CREATE2 Logic
+
+> ❗ Attack: If you're about to deploy something valuable (e.g., minting contract), and the address is predictable...
+
+Attackers can **monitor mempool** & try to:
+
+- Pre-deploy to block you
+- **Sandwich** your deployment
+- Race to interact with your freshly deployed contract
+
+---
+
 #### ☠ Smear Campaign
 
-❗ Attackers predeploy a contract to the intended address, interacting with other protocols, and then **self-destruct** to "free up" the address.
+> ❗ Attack: Attacker predeploy a contract your predicted `CREATE2` address, interacting with other protocols, and then **self-destruct** to "free up" the address.
 
 In that case, this address likely have **lingering associations** to the contract deployed by the attacker, affecting future contract deployed to it.
-
-> Even though deploying with CREATE2 resets the contract's internal storage, the address itself might already be recognized or referenced by other protocols. This means your contract can unintentionally inherit residual effects, such as token approvals, role assignments, or whitelisted permissions — potentially leading to unexpected behavior.
 
 #### 💡 Prevention
 
