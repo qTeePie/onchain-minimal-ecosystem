@@ -10,24 +10,41 @@ pragma solidity ^0.8.28;
 
 // modifiers
 
-// functions are first grouped by
+// functions grouped by
 // - external
 // - public
 // - internal
 // - private
-// note how the external functions "descend" in order of how much they can modify or interact with the state
 
 contract Factory {
-    // Dummy content for now
-    address public owner;
+    Child[] public children;
+    uint256 public totalChildren;
 
-    // indexed = args stored as log topics, off-chain indexers use these for filtering.
-    event PairCreated(address indexed token0, address indexed token1, address pair, uint256);
+    /**
+     * Logs who deployed it, where it lives, and what data it holds.
+     *
+     *  Basics of events:
+     * - Indexed params become topics in the event log entry
+     * - Indexers such as *The Graph* etc. can filter by these fields.
+     * - Non-indexed fields (here data and timestamp) are stored in a blob structure and are not searchable.
+     */
+    event ChildCreated(
+        address indexed child, address indexed creator, uint256 indexed childId, uint256 data, uint256 timestamp
+    );
 
-    // Call this function to deploy a new pair of tokens.
-    function createPair(address tokenA, address tokenB) external returns (address pair) {}
+    function createChild(uint256 data) public {
+        totalChildren++;
+        Child child = new Child(data);
+        children.push(child);
 
-    constructor() {
-        owner = msg.sender;
+        emit ChildCreated(address(child), msg.sender, totalChildren, data, block.timestamp);
+    }
+}
+
+contract Child {
+    uint256 public data;
+
+    constructor(uint256 _data) {
+        data = _data;
     }
 }

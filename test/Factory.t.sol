@@ -7,6 +7,5 @@ import "../patterns/factory/Factory.sol";
 contract FactoryTest is Test {
     function testOwner() public {
         Factory factory = new Factory();
-        assertEq(factory.owner(), address(this));
     }
 }
