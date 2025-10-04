@@ -9,24 +9,30 @@ A classic example of this pattern in the blockchain realm is `UniswapV2Factory`,
 
 The factory example implemented here is inspired by **Uniswap** 🦄, a factory contract deploying a minimal pair comtract, using CREATE2 to deploy at a predictable address. 🚀
 
-## ✨ Benefits
+---
 
-- Efficient mass deployment of similar contracts.
-- Predictability in deployment logic.
+## CREATE2
 
-## ⚠️ Tradeoffs
+When you use CREATE2, the address of the contract is deterministic.
 
-- CREATE2 introduces predictability, which is both a feature and a risk (more in this below.)
+```solidity
+address = keccak256(
+  0xff ++ factoryAddress ++ salt ++ keccak256(creationCode)
+)
+```
+
+→ meaning: anyone can recompute that hash and verify that some address come a certain factory.
+
+✅ no need to store mappings like isPool[address] = true;
+✅ verification is pure math — no state lookups, no gas wasted.
 
 ---
 
-### CREATE2 Considerations
+### ⚠️ Security risks
 
-While `CREATE2` is incredibly useful for predictable address deployment, it comes with its own caveats and risks.
+CREATE2 introduces predictability, which is both a feature and a risk. Below are some of the security risks introduced by CREATE2.
 
----
-
-### 💰 Pre-funding
+#### 💰 Pre-funding
 
 > ❗ Attack: An attacker sends ETH or tokens to your `CREATE2` address before it’s deployed.
 
@@ -49,6 +55,8 @@ Attackers can **monitor mempool** & try to:
 > ❗ Attack: Attacker predeploy a contract your predicted `CREATE2` address, interacting with other protocols, and then **self-destruct** to "free up" the address.
 
 In that case, this address likely have **lingering associations** to the contract deployed by the attacker, affecting future contract deployed to it.
+
+---
 
 #### 💡 Prevention
 
