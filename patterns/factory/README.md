@@ -1,4 +1,4 @@
-# Factory Pattern
+# 🏭 Factory Pattern
 
 - [📄 Example Code](./Factory.sol)
 - [💚 Tests](../../test/Factory.t.sol)
@@ -56,13 +56,32 @@ then suddenly:
 
 ---
 
-### 🔒 Improving Security
+### Improving Security
 
 (Read this) 👉 [Factories Improve Smart Contract Security — ConsenSys Diligence](https://diligence.consensys.io/blog/2019/09/factories-improve-smart-contract-security/)
 
 ---
 
-## CREATE2
+## 🏗️ Factory Pattern Extensions
+
+### Gas Improvement
+
+The gas cost for the CREATE opcode is presently 32,000 Gwei. Each time an instance of the Foundation contract is deployed, a gas fee of 32,000 Gwei is charged.
+
+The major drawback of the normal factory pattern is high gas costs. And that’s where the cloned factory pattern comes in handy.
+
+Gas costs FP: https://ethereum.stackexchange.com/questions/84764/high-gas-cost-for-factory-contract
+
+**The clone factory pattern: The right pattern for deploying multiple instances of our Solidity smart contract**
+
+CLONE FP: https://blog.logrocket.com/cloning-solidity-smart-contracts-factory-pattern/
+DELEGATE CALL: https://medium.com/coinmonks/delegatecall-calling-another-contract-function-in-solidity-b579f804178c
+
+#### Proxies
+
+---
+
+### CREATE2
 
 When you use CREATE2, the address of the contract is deterministic.
 
@@ -79,17 +98,17 @@ address = keccak256(
 
 ---
 
-### ⚠️ Security risks
+#### ⚠️ Security risks
 
 CREATE2 introduces predictability, which is both a feature and a risk. Below are some of the security risks introduced by CREATE2.
 
-#### Pre-funding
+##### Pre-funding
 
 > ❗ Attack: An attacker sends ETH or tokens to your `CREATE2` address before it’s deployed.
 
 ---
 
-#### Front-Running Your CREATE2 Logic
+##### Front-Running Your CREATE2 Logic
 
 > ❗ Attack: If you're about to deploy something valuable (e.g., minting contract), and the address is predictable...
 
@@ -101,7 +120,7 @@ Attackers can **monitor mempool** & try to:
 
 ---
 
-#### Smear Campaign
+##### Smear Campaign
 
 > ❗ Attack: Attacker predeploy a contract your predicted `CREATE2` address, interacting with other protocols, and then **self-destruct** to "free up" the address.
 
@@ -109,7 +128,7 @@ In that case, this address likely have **lingering associations** to the contrac
 
 ---
 
-#### 💡 Prevention
+##### 💡 Prevention
 
 - **Before deploying to any address in a production setting, check the _entire on chain history_ of the adress.**
 - **Avoid reusing `CREATE2` salts across testnets / mainnet.**

@@ -18,10 +18,20 @@ pragma solidity ^0.8.28;
 
 contract Factory {
     Child[] public children;
-    uint256 public disabledCount;
+    uint256 public disabledCount; // tracks disabled children
 
+    /**
+     * Logs who deployed it, where it lives, and what data it holds.
+     *
+     *  Basics of events:
+     * - Indexed params become topics in the event log entry
+     * - Indexers such as *The Graph* etc. can filter by these fields.
+     * - Non-indexed fields (here data and timestamp) are stored in a blob structure and are not searchable.
+     */
     event ChildCreated(address indexed child, uint256 indexed index, uint256 data);
     event ChildDisabled(address indexed child, uint256 indexed index);
+
+    error AlreadyDisabled();
 
     function createChild(uint256 data) external {
         Child child = new Child(data, children.length);
@@ -32,10 +42,11 @@ contract Factory {
     function getChildren() external view returns (Child[] memory enabledChildren) {
         uint256 total = children.length;
         uint256 active = total - disabledCount;
-        enabledChildren = new Child[](active);
+        enabledChildren = new Child[](active); // init array with capacity = active
 
         uint256 count;
         for (uint256 i = 0; i < total; i++) {
+            // auto generated getter for child.isEnabled field
             if (children[i].isEnabled()) {
                 enabledChildren[count] = children[i];
                 count++;
@@ -51,8 +62,6 @@ contract Factory {
         disabledCount++;
         emit ChildDisabled(address(child), idx);
     }
-
-    error AlreadyDisabled();
 }
 
 contract Child {
