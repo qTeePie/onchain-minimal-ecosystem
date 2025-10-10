@@ -21,13 +21,9 @@ In blockchain ecosystems such as Uniswap, where new contracts are deployed frequ
 
 ### Centralized tracking
 
-A factory works as a sort of bookkeeper for its child contracts (the contracts it deploys), storing their addresses, relevant timestamps, and event emition.
+If you work with a factory+registry coupled system, the factory works as a sort of bookkeeper for its child contracts (the contracts it deploys), storing their addresses, relevant timestamps, and event emition.
 
-This makes it easy for:
-
-- indexers to query new contracts,
-- verifying that some child contract was deployed by the official factory, and
-- developers to fetch information like the total count of children from a central location.
+In a decoupled design, this bookkeeping responsibility is delegated to an external registry, while the factory focuses solely on deployment logic.
 
 ---
 

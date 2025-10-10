@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import "forge-std/Test.sol";
-import "../patterns/factory/Factory.sol";
+import "../contracts/factory/Factory.sol";
 
 contract FactoryTest is Test {
     function testOwner() public {
