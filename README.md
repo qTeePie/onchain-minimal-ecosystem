@@ -43,7 +43,7 @@ Each folder represents a small building block that can live on its own or combin
 ## 🧩 Core Components
 
 - 🏭 `factory/` — spawns new modules
-- 🗂️ `registry/` — tracks & manages them
+- 🗂️ `registry/` — tracks & manages factory and module
 - 🔐 `access/` — permission & ownership logic
 - 🧾 `proxy/` — upgrade & indirection patterns
 - 💸 `pull-payment/` — safe payment flows

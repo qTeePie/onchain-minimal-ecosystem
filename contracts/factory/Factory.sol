@@ -42,7 +42,7 @@ contract Factory {
     /// fields gotta be <= 256bits
     struct CreationConfig {
         address NFTReceiver; // creator can set an address to get a cute NFT as reward (maybe grandma? 👵💜)
-        bool isGold; // activates any premium features
+        bool isPremium; // activates any premium features
     }
 
     /// fields gotta be <= 256bits
@@ -64,11 +64,11 @@ contract Factory {
         external
         returns (address module)
     {
-        // creating a module can only be LIVE or OFF (pause cannot be a starting value)
-        require(mutableConfig.mode <= 1, "Invalid mode");
+        // module cannot be spawned in an OFF state
+        require(mutableConfig.mode != 0, "Invalid mode");
 
         uint256 packedCreation =
-            (uint256(uint160(creationConfig.NFTReceiver)) << 0) | (creationConfig.isGold ? 1 << 160 : 0);
+            (uint256(uint160(creationConfig.NFTReceiver)) << 0) | (creationConfig.isPremium ? 1 << 160 : 0);
         uint256 packedMutable = (uint256(mutableConfig.mode) << 0);
 
         ConfigurableModule deployed = new ConfigurableModule(packedCreation, packedMutable, modules.length);
@@ -77,8 +77,12 @@ contract Factory {
         // TODO: 💌 tell the registry (insert IRegistry in constructor later)
         //registry.registerModule(address(newModule), msg.sender);
 
-        emit ModuleCreated(address(deployed), modules.length - 1, packedCreation);
+        emit ModuleCreated(address(deployed), moduleCount(), packedCreation);
 
         module = address(deployed);
+    }
+
+    function moduleCount() public view returns (uint256) {
+        return modules.length;
     }
 }
