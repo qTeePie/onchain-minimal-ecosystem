@@ -3,13 +3,12 @@ pragma solidity ^0.8.28;
 
 // libraries
 import "forge-std/Test.sol";
-import "../contracts/factory/Factory.sol";
 // locals
-import {Factory} from "../contracts/factory/Factory.sol";
+import {Factory} from "../contracts/Factory.sol";
 
 contract FactoryTest is Test {
     uint8 constant MODE_COUNT = 3; // OFF, LIVE, PAUSED
-    uint256 constant MODE_COUNT_INVALIDS = 1; // OFF
+    uint8 constant MODE_COUNT_INVALIDS = 1; // OFF
 
     // registry will own the factory
     address immutable registry = makeAddr("registry");
@@ -42,7 +41,7 @@ contract FactoryTest is Test {
     //////////////////////////////////////////////////////////////*/
     function testCreateModuleWorks() public {
         // start-count
-        uint256 startCount = factory.moduleCount();
+        uint256 preModuleCount = factory.moduleCount();
 
         // --- prepare configs ---
         address nftReceiver = makeAddr("nftReceiver");
@@ -64,12 +63,12 @@ contract FactoryTest is Test {
         address moduleAddr = factory.createModule(creationConfig, mutableConfig);
 
         // --- post-conditions ---
-        assertEq(factory.moduleCount(), startCount + 1, "Module count should increase");
-        assertEq(factory.modules(startCount), moduleAddr, "Stored module mismatch");
+        assertEq(factory.moduleCount(), preModuleCount + 1, "Module count should increase");
+        assertEq(factory.modules(preModuleCount), moduleAddr, "Stored module mismatch");
     }
 
     function testModuleAddressStoredCorrectlyInFactory() public {
-        // modules assigned index in mapping (0 => latest deployed)
+        // --- expect and create module ---
         uint256 expectedIndex = factory.moduleCount();
         address moduleAddr = spawnModule();
 
@@ -77,8 +76,17 @@ contract FactoryTest is Test {
     }
 
     function testCreateModuleRevertsOnInvalidMode() public {
-        // call createModule with mode > 1
-        // expect revert "Invalid mode"
+        // --- Init invalid  ---
+        uint8 invalidMode = invalidModuleCreationMode();
+        uint256 preModuleCount = factory.moduleCount();
+
+        // --- expect and trigger revert ---
+        vm.expectRevert(bytes("Invalid mode"));
+        spawnModule(invalidMode);
+
+        // --- test modulecount is unchanged ---
+        uint256 postModuleCount = factory.moduleCount();
+        assertTrue(preModuleCount == postModuleCount);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -103,14 +111,6 @@ contract FactoryTest is Test {
     }
 
     /*//////////////////////////////////////////////////////////////
-                          EDGE-CASES / EVENTS
-    //////////////////////////////////////////////////////////////*/
-    function testModuleCreatedEventEmitted() public {
-        // use vm.expectEmit / ethers event matcher
-        // check for correct params
-    }
-
-    /*//////////////////////////////////////////////////////////////
                                 REGISTRY
     //////////////////////////////////////////////////////////////*/
     function testModuleDisabledEvent() public {
@@ -120,6 +120,17 @@ contract FactoryTest is Test {
     // -----------------------
     // 🔧 PRIVATE HELPERS
     // -----------------------
+    function validModuleCreationMode() private pure returns (uint8 mode) {
+        uint8 validRange = MODE_COUNT - MODE_COUNT_INVALIDS;
+        uint256 hash = uint256(keccak256("mock_mode_seed"));
+        mode = uint8(MODE_COUNT_INVALIDS + (hash % validRange));
+    }
+
+    function invalidModuleCreationMode() private pure returns (uint8 mode) {
+        uint256 hash = uint256(keccak256("mock_mode_seed"));
+        mode = uint8((hash % MODE_COUNT_INVALIDS));
+    }
+
     function mockCreationConfig() internal pure returns (Factory.CreationConfig memory config) {
         // generate a pseudo address from a fixed seed
         address receiver = address(uint160(uint256(keccak256("mock_receiver_seed"))));
@@ -131,13 +142,22 @@ contract FactoryTest is Test {
     }
 
     function mockMutableConfig() internal pure returns (Factory.MutableConfig memory config) {
-        uint8 mode = uint8(1 + (uint256(keccak256("mock_mode_seed")) % (MODE_COUNT - MODE_COUNT_INVALIDS)));
-
-        config = Factory.MutableConfig({mode: mode});
+        config = Factory.MutableConfig({mode: validModuleCreationMode()});
     }
 
     // generates module with params
     function spawnModule(address nftReceiver, bool isPremium, uint8 mode) internal returns (address) {
+        return factory.createModule(
+            Factory.CreationConfig({NFTReceiver: nftReceiver, isPremium: isPremium}),
+            Factory.MutableConfig({mode: mode})
+        );
+    }
+
+    // generates module mocks all except mode
+    function spawnModule(uint8 mode) internal returns (address) {
+        bool isPremium = (uint256(keccak256("mock_premium_seed")) & 1 == 0);
+        address nftReceiver = makeAddr("nftReceiver");
+
         return factory.createModule(
             Factory.CreationConfig({NFTReceiver: nftReceiver, isPremium: isPremium}),
             Factory.MutableConfig({mode: mode})
