@@ -41,8 +41,9 @@ contract Factory {
 
     /// fields gotta be <= 256bits
     struct CreationConfig {
-        address NFTReceiver; // creator can set an address to get a cute NFT as reward (maybe grandma? 👵💜)
+        address owner; // address to set as owner of deployed module
         bool isPremium; // activates any premium features
+        uint256 timestamp; // timestamp of creation (will be saved as uint40)
     }
 
     /// fields gotta be <= 256bits
@@ -67,8 +68,10 @@ contract Factory {
         // module cannot be spawned in an OFF state
         require(mutableConfig.mode != 0, "Invalid mode");
 
-        uint256 packedCreation =
-            (uint256(uint160(creationConfig.NFTReceiver)) << 0) | (creationConfig.isPremium ? 1 << 160 : 0);
+        uint256 packedCreation = (uint256(uint160(creationConfig.owner)) << 0) // bits 0–159
+            | (creationConfig.isPremium ? (1 << 160) : 0) // bit 160
+            | (uint256(uint40(creationConfig.timestamp)) << 161); // bits 161–200
+
         uint256 packedMutable = (uint256(mutableConfig.mode) << 0);
 
         ConfigurableModule deployed = new ConfigurableModule(packedCreation, packedMutable, modules.length);

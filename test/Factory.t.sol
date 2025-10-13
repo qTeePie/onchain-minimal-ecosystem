@@ -18,42 +18,36 @@ contract FactoryTest is Test {
     event ModuleCreated(address indexed module, uint256 indexed index, uint256 data);
     event ModuleDisabled(address indexed module, uint256 indexed index);
 
-    enum Mode {
-        OFF, // 0
-        LIVE, // 1
-        PAUSED // 2
-
-    }
-
     /*//////////////////////////////////////////////////////////////
                            SETUP + DEPLOYMENT
     //////////////////////////////////////////////////////////////*/
-    function setUp() public {
+    function setUp() external {
         factory = new Factory();
     }
 
-    function testFactoryStartsEmpty() public view {
-        assertTrue(factory.moduleCount() == 0);
+    function testFactoryStartsEmpty() external view {
+        assertEq(factory.moduleCount(), 0);
     }
 
     /*//////////////////////////////////////////////////////////////
                               CREATEMODULE
     //////////////////////////////////////////////////////////////*/
-    function testCreateModuleWorks() public {
+    function testCreateModuleWorks() external {
         // start-count
-        uint256 preModuleCount = factory.moduleCount();
+        uint256 startCount = factory.moduleCount();
 
         // --- prepare configs ---
-        address nftReceiver = makeAddr("nftReceiver");
+        address owner = makeAddr("owner");
+        uint256 timestamp = uint256(keccak256("mock_timestamp"));
         bool isPremium = true;
-        Mode mode = Mode.LIVE;
+        uint8 mode = 1;
 
-        Factory.CreationConfig memory creationConfig =
-            Factory.CreationConfig({NFTReceiver: nftReceiver, isPremium: isPremium});
-        Factory.MutableConfig memory mutableConfig = Factory.MutableConfig({mode: uint8(mode)});
+        Factory.CreationConfig memory creationConfig = makeCreationConfig(owner, timestamp, isPremium);
+        Factory.MutableConfig memory mutableConfig = Factory.MutableConfig({mode: mode});
 
         // -- expect event fired, compute topic `data` (creationConfigs) ---
-        uint256 expectedPackedCreation = (uint256(uint160(nftReceiver)) << 0) | (isPremium ? 1 << 160 : 0);
+        uint256 expectedPackedCreation = (uint256(uint160(creationConfig.owner)) << 0)
+            | (creationConfig.isPremium ? (1 << 160) : 0) | (uint256(uint40(creationConfig.timestamp)) << 161);
 
         // TODO: implement checks topic 1 (create2)
         vm.expectEmit(false, true, false, true, address(factory));
@@ -63,11 +57,11 @@ contract FactoryTest is Test {
         address moduleAddr = factory.createModule(creationConfig, mutableConfig);
 
         // --- post-conditions ---
-        assertEq(factory.moduleCount(), preModuleCount + 1, "Module count should increase");
-        assertEq(factory.modules(preModuleCount), moduleAddr, "Stored module mismatch");
+        assertEq(factory.moduleCount(), startCount + 1, "Module count should increase");
+        assertEq(factory.modules(startCount), moduleAddr, "Stored module mismatch");
     }
 
-    function testModuleAddressStoredCorrectlyInFactory() public {
+    function testModuleAddressStoredCorrectlyInFactory() external {
         // --- expect and create module ---
         uint256 expectedIndex = factory.moduleCount();
         address moduleAddr = spawnModule();
@@ -75,36 +69,36 @@ contract FactoryTest is Test {
         assertEq(moduleAddr, factory.modules(expectedIndex));
     }
 
-    function testCreateModuleRevertsOnInvalidMode() public {
+    function testCreateModuleCreationRevertsOnInvalidMode() external {
         // --- Init invalid  ---
         uint8 invalidMode = invalidModuleCreationMode();
-        uint256 preModuleCount = factory.moduleCount();
+        uint256 startCount = factory.moduleCount();
 
         // --- expect and trigger revert ---
         vm.expectRevert(bytes("Invalid mode"));
         spawnModule(invalidMode);
 
         // --- test modulecount is unchanged ---
-        uint256 postModuleCount = factory.moduleCount();
-        assertTrue(preModuleCount == postModuleCount);
+        uint256 endCount = factory.moduleCount();
+        assertEq(endCount, startCount, "Module count should not change on revert");
     }
 
     /*//////////////////////////////////////////////////////////////
                              PACKING LOGIC
     //////////////////////////////////////////////////////////////*/
-    function testPackedCreationContainsReceiver() public {
+    function testPackedCreationContainsReceiver() external {
         // decode the packed creation value from emitted event
-        // confirm lower 160 bits == NFTReceiver address
+        // confirm lower 160 bits == owner address
     }
 
-    function testPackedCreationPremiumFlag() public {
+    function testPackedCreationPremiumFlag() external {
         // check if the isGold bit is set correctly at bit 160
     }
 
     /*//////////////////////////////////////////////////////////////
                             MULTIPLE MODULES
     //////////////////////////////////////////////////////////////*/
-    function testMultipleModulesStoredSequentially() public {
+    function testMultipleModulesStoredSequentially() external {
         // create a few modules
         // assert: modules array stores each one in order
         // assert: event index matches array index
@@ -113,7 +107,7 @@ contract FactoryTest is Test {
     /*//////////////////////////////////////////////////////////////
                                 REGISTRY
     //////////////////////////////////////////////////////////////*/
-    function testModuleDisabledEvent() public {
+    function testModuleDisabledEvent() external {
         // placeholder — once you implement disable()
     }
 
@@ -131,37 +125,38 @@ contract FactoryTest is Test {
         mode = uint8((hash % MODE_COUNT_INVALIDS));
     }
 
-    function mockCreationConfig() internal pure returns (Factory.CreationConfig memory config) {
-        // generate a pseudo address from a fixed seed
-        address receiver = address(uint160(uint256(keccak256("mock_receiver_seed"))));
+    function mockMutableConfig() private pure returns (Factory.MutableConfig memory config) {
+        config = Factory.MutableConfig({mode: validModuleCreationMode()});
+    }
+
+    function makeCreationConfig(address owner, uint256 timestamp, bool isPremium)
+        private
+        pure
+        returns (Factory.CreationConfig memory config)
+    {
+        config = Factory.CreationConfig({owner: owner, timestamp: timestamp, isPremium: isPremium});
+    }
+
+    function mockCreationConfig() private pure returns (Factory.CreationConfig memory config) {
+        // generate a pseudo address & timestamp from seed
+        address owner = address(uint160(uint256(keccak256("mock_owner_seed"))));
+        uint256 timestamp = uint256(keccak256("mock_timestamp"));
 
         // alternate true/false in a deterministic way (or just fix one)
         bool isPremium = (uint256(keccak256("mock_premium_seed")) & 1 == 0);
 
-        config = Factory.CreationConfig({NFTReceiver: receiver, isPremium: isPremium});
-    }
-
-    function mockMutableConfig() internal pure returns (Factory.MutableConfig memory config) {
-        config = Factory.MutableConfig({mode: validModuleCreationMode()});
+        config = makeCreationConfig(owner, timestamp, isPremium);
     }
 
     // generates module with params
-    function spawnModule(address nftReceiver, bool isPremium, uint8 mode) internal returns (address) {
-        return factory.createModule(
-            Factory.CreationConfig({NFTReceiver: nftReceiver, isPremium: isPremium}),
-            Factory.MutableConfig({mode: mode})
-        );
+    function spawnModule(address owner, uint256 timestamp, bool isPremium, uint8 mode) internal returns (address) {
+        return
+            factory.createModule(makeCreationConfig(owner, timestamp, isPremium), Factory.MutableConfig({mode: mode}));
     }
 
     // generates module mocks all except mode
     function spawnModule(uint8 mode) internal returns (address) {
-        bool isPremium = (uint256(keccak256("mock_premium_seed")) & 1 == 0);
-        address nftReceiver = makeAddr("nftReceiver");
-
-        return factory.createModule(
-            Factory.CreationConfig({NFTReceiver: nftReceiver, isPremium: isPremium}),
-            Factory.MutableConfig({mode: mode})
-        );
+        return factory.createModule(mockCreationConfig(), Factory.MutableConfig({mode: mode}));
     }
 
     //  generates some configurable module
