@@ -77,7 +77,7 @@ contract Factory {
         // TODO: 💌 tell the registry (insert IRegistry in constructor later)
         //registry.registerModule(address(newModule), msg.sender);
 
-        emit ModuleCreated(address(deployed), moduleCount(), packedCreation);
+        emit ModuleCreated(address(deployed), moduleCount() - 1, packedCreation);
 
         module = address(deployed);
     }

@@ -33,6 +33,7 @@ and let the registry handle all control logic. 💅
 This module is designed to be registry-owned. 
 */
 
+// TODO: ❗ implement ownable (let an address external to this ecosystem own modules they create)
 contract ConfigurableModule {
     uint256 public immutable creationConfig; // immutable config set at birth
     uint256 public mutableConfig; // mutable configs, slot 0 (immutable variable creationConfig does not affect storage layout)

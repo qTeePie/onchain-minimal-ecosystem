@@ -56,8 +56,9 @@ contract FactoryTest is Test {
         // -- expect event fired, compute topic `data` (creationConfigs) ---
         uint256 expectedPackedCreation = (uint256(uint160(nftReceiver)) << 0) | (isPremium ? 1 << 160 : 0);
 
+        // TODO: implement checks topic 1 (create2)
         vm.expectEmit(false, true, false, true, address(factory));
-        emit ModuleCreated(address(0), factory.moduleCount() + 1, expectedPackedCreation);
+        emit ModuleCreated(address(0), factory.moduleCount(), expectedPackedCreation);
 
         // --- create module / trigger events ---
         address moduleAddr = factory.createModule(creationConfig, mutableConfig);
@@ -67,9 +68,12 @@ contract FactoryTest is Test {
         assertEq(factory.modules(startCount), moduleAddr, "Stored module mismatch");
     }
 
-    function testModuleAddressStoredCorrectly() public {
-        // compare module = modules[0]
-        // assertEqual(module, emittedAddress)
+    function testModuleAddressStoredCorrectlyInFactory() public {
+        // modules assigned index in mapping (0 => latest deployed)
+        uint256 expectedIndex = factory.moduleCount();
+        address moduleAddr = spawnModule();
+
+        assertEq(moduleAddr, factory.modules(expectedIndex));
     }
 
     function testCreateModuleRevertsOnInvalidMode() public {
