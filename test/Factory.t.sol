@@ -37,16 +37,16 @@ contract FactoryTest is Test {
         uint256 startCount = factory.moduleCount();
 
         // --- prepare configs ---
-        address owner = makeAddr("owner");
+        address creator = makeAddr("creator");
         uint256 timestamp = uint256(keccak256("mock_timestamp"));
         bool isPremium = true;
         uint8 mode = 1;
 
-        Factory.CreationConfig memory creationConfig = makeCreationConfig(owner, timestamp, isPremium);
+        Factory.CreationConfig memory creationConfig = makeCreationConfig(creator, timestamp, isPremium);
         Factory.MutableConfig memory mutableConfig = Factory.MutableConfig({mode: mode});
 
         // -- expect event fired, compute topic `data` (creationConfigs) ---
-        uint256 expectedPackedCreation = (uint256(uint160(creationConfig.owner)) << 0)
+        uint256 expectedPackedCreation = (uint256(uint160(creationConfig.creator)) << 0)
             | (creationConfig.isPremium ? (1 << 160) : 0) | (uint256(uint40(creationConfig.timestamp)) << 161);
 
         // TODO: implement checks topic 1 (create2)
@@ -88,7 +88,7 @@ contract FactoryTest is Test {
     //////////////////////////////////////////////////////////////*/
     function testPackedCreationContainsReceiver() external {
         // decode the packed creation value from emitted event
-        // confirm lower 160 bits == owner address
+        // confirm lower 160 bits == creator address
     }
 
     function testPackedCreationPremiumFlag() external {
@@ -129,29 +129,29 @@ contract FactoryTest is Test {
         config = Factory.MutableConfig({mode: validModuleCreationMode()});
     }
 
-    function makeCreationConfig(address owner, uint256 timestamp, bool isPremium)
+    function makeCreationConfig(address creator, uint256 timestamp, bool isPremium)
         private
         pure
         returns (Factory.CreationConfig memory config)
     {
-        config = Factory.CreationConfig({owner: owner, timestamp: timestamp, isPremium: isPremium});
+        config = Factory.CreationConfig({creator: creator, timestamp: timestamp, isPremium: isPremium});
     }
 
     function mockCreationConfig() private pure returns (Factory.CreationConfig memory config) {
         // generate a pseudo address & timestamp from seed
-        address owner = address(uint160(uint256(keccak256("mock_owner_seed"))));
+        address creator = address(uint160(uint256(keccak256("mock_owner_seed"))));
         uint256 timestamp = uint256(keccak256("mock_timestamp"));
 
         // alternate true/false in a deterministic way (or just fix one)
         bool isPremium = (uint256(keccak256("mock_premium_seed")) & 1 == 0);
 
-        config = makeCreationConfig(owner, timestamp, isPremium);
+        config = makeCreationConfig(creator, timestamp, isPremium);
     }
 
     // generates module with params
-    function spawnModule(address owner, uint256 timestamp, bool isPremium, uint8 mode) internal returns (address) {
+    function spawnModule(address creator, uint256 timestamp, bool isPremium, uint8 mode) internal returns (address) {
         return
-            factory.createModule(makeCreationConfig(owner, timestamp, isPremium), Factory.MutableConfig({mode: mode}));
+            factory.createModule(makeCreationConfig(creator, timestamp, isPremium), Factory.MutableConfig({mode: mode}));
     }
 
     // generates module mocks all except mode

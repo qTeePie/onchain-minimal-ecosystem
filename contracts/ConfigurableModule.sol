@@ -15,22 +15,22 @@ pragma solidity ^0.8.28;
 // - private
 
 /*
-🔒 Ownership Patterns
+    🔒 Ownership Patterns
 
-1️⃣ Registry-owned:
-- Registry = owner.
-- Only registry can call privileged funcs (like updateMode).
-- Centralized, clean, secure.
+    1️⃣ Registry-owned:
+    - Registry = owner.
+    - Only registry can call privileged funcs (like updateMode).
+    - Centralized, clean, secure.
 
-2️⃣ Creator-owned:
-- Module stores creator address.
-- Registry checks creator before updating.
-- More decentralized, but adds logic.
+    2️⃣ Creator-owned:
+    - Module stores creator address.
+    - Registry checks creator before updating.
+    - More decentralized, but adds logic.
 
-💡 Tip: Keep modules dumb (just data + small setters),
-and let the registry handle all control logic. 💅
+    💡 Tip: Keep modules dumb (just data + small setters),
+    and let the registry handle all control logic. 💅
 
-This module is designed to be registry-owned. 
+    This module is designed to be registry-owned. 
 */
 
 // TODO: ❗ implement ownable (let an address external to this ecosystem own modules they create)

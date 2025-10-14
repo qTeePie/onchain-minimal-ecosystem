@@ -39,14 +39,14 @@ contract Factory {
     // IRegistry public registry;
     address[] public modules; // tracks addresses
 
-    /// fields gotta be <= 256bits
+    /// `creationConfig` = locked in at birth
     struct CreationConfig {
-        address owner; // address to set as owner of deployed module
+        address creator; // address to set as creator of deployed module
         bool isPremium; // activates any premium features
         uint256 timestamp; // timestamp of creation (will be saved as uint40)
     }
 
-    /// fields gotta be <= 256bits
+    /// `mutableConfig` = tweakable stuff later
     struct MutableConfig {
         uint8 mode;
     }
@@ -59,8 +59,6 @@ contract Factory {
         registry = _registry; // 💅 plug in the registry at deploy time
     }*/
 
-    /// `creationConfig` = locked in at birth
-    /// `mutableConfig` = tweakable stuff later
     function createModule(CreationConfig calldata creationConfig, MutableConfig calldata mutableConfig)
         external
         returns (address module)
@@ -68,7 +66,7 @@ contract Factory {
         // module cannot be spawned in an OFF state
         require(mutableConfig.mode != 0, "Invalid mode");
 
-        uint256 packedCreation = (uint256(uint160(creationConfig.owner)) << 0) // bits 0–159
+        uint256 packedCreation = (uint256(uint160(creationConfig.creator)) << 0) // bits 0–159
             | (creationConfig.isPremium ? (1 << 160) : 0) // bit 160
             | (uint256(uint40(creationConfig.timestamp)) << 161); // bits 161–200
 
