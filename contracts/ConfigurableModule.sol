@@ -33,11 +33,16 @@ pragma solidity ^0.8.28;
     This module is designed to be registry-owned. 
 */
 
-// TODO: ❗ implement ownable (let an address external to this ecosystem own modules they create)
+// TODO: ❗ implement registry as owner
+// TODO: ❗Switch to minimal proxy pattern (EIP-1167)
+// Factory will deploy tiny proxies pointing to this logic contract.
+// Registry will track owners + configs externally to keep clones dumb & cheap.
 contract ConfigurableModule {
+    address public controller;
+    uint256 public index;
+
     uint256 public immutable creationConfig; // immutable config set at birth
     uint256 public mutableConfig; // mutable configs, slot 0 (immutable variable creationConfig does not affect storage layout)
-    uint256 public index;
 
     enum Mode {
         OFF, // 0
@@ -46,10 +51,12 @@ contract ConfigurableModule {
 
     }
 
-    constructor(uint256 _creationConfig, uint256 _mutableConfig, uint256 _index) {
+    constructor(uint256 _creationConfig, uint256 _mutableConfig, uint256 _index, address _controller) {
+        index = _index;
+        controller = _controller;
+
         creationConfig = _creationConfig;
         mutableConfig = _mutableConfig;
-        index = _index;
     }
 
     // to keep bytecode small, explicit pause(), restart(), disable() are implemented in registry

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import "./ConfigurableModule.sol";
+import {IRegistry} from "./interfaces/IRegistry.sol";
+import {ConfigurableModule} from "./ConfigurableModule.sol";
 
 // type declarations (e.g. using Address for address)
 // state vars
@@ -36,14 +37,18 @@ This factory uses a decoupled design — registry syncs via events instead of di
 */
 
 contract Factory {
-    // IRegistry public registry;
+    IRegistry public registry;
     address[] public modules; // tracks addresses
+
+    // -----------------------
+    // CONFIG
+    // -----------------------
 
     /// `creationConfig` = locked in at birth
     struct CreationConfig {
-        address creator; // address to set as creator of deployed module
-        bool isPremium; // activates any premium features
-        uint256 timestamp; // timestamp of creation (will be saved as uint40)
+        address creator;
+        bool isPremium;
+        uint256 timestamp;
     }
 
     /// `mutableConfig` = tweakable stuff later
@@ -51,13 +56,15 @@ contract Factory {
         uint8 mode;
     }
 
+    // -----------------------
+    // EVENTS
+    // -----------------------
     event ModuleCreated(address indexed module, uint256 indexed index, uint256 data);
     event ModuleDisabled(address indexed module, uint256 indexed index);
 
-    // TODO: add IRegistry param in constructor once registry contract is ready
-    /*constructor(IRegistry _registry) {
+    constructor(IRegistry _registry) {
         registry = _registry; // 💅 plug in the registry at deploy time
-    }*/
+    }
 
     function createModule(CreationConfig calldata creationConfig, MutableConfig calldata mutableConfig)
         external
@@ -66,13 +73,13 @@ contract Factory {
         // module cannot be spawned in an OFF state
         require(mutableConfig.mode != 0, "Invalid mode");
 
-        uint256 packedCreation = (uint256(uint160(creationConfig.creator)) << 0) // bits 0–159
-            | (creationConfig.isPremium ? (1 << 160) : 0) // bit 160
-            | (uint256(uint40(creationConfig.timestamp)) << 161); // bits 161–200
+        uint256 packedCreation = (uint256(uint160(creationConfig.creator)) << 0)
+            | (creationConfig.isPremium ? (1 << 160) : 0) | (uint256(uint40(creationConfig.timestamp)) << 161);
 
         uint256 packedMutable = (uint256(mutableConfig.mode) << 0);
 
-        ConfigurableModule deployed = new ConfigurableModule(packedCreation, packedMutable, modules.length);
+        ConfigurableModule deployed =
+            new ConfigurableModule(packedCreation, packedMutable, modules.length, address(registry));
         modules.push(address(deployed));
 
         // TODO: 💌 tell the registry (insert IRegistry in constructor later)
@@ -86,4 +93,6 @@ contract Factory {
     function moduleCount() public view returns (uint256) {
         return modules.length;
     }
+
+    //function getByteCode(address registry) {}
 }
