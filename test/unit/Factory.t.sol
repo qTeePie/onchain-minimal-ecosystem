@@ -4,8 +4,8 @@ pragma solidity ^0.8.28;
 // libraries
 import "forge-std/Test.sol";
 // locals
-import {Factory} from "../contracts/Factory.sol";
-import {IRegistry} from "../contracts/interfaces/IRegistry.sol";
+import {Factory} from "../../contracts/Factory.sol";
+import {IRegistry} from "../../contracts/interfaces/IRegistry.sol";
 
 contract FactoryTest is Test {
     uint8 constant MODE_COUNT = 3; // OFF, LIVE, PAUSED
@@ -40,15 +40,15 @@ contract FactoryTest is Test {
         // --- prepare configs ---
         address creator = makeAddr("creator");
         uint256 timestamp = uint256(keccak256("mock_timestamp"));
-        bool isPremium = true;
+        bool premium = true;
         uint8 mode = 1;
 
-        Factory.CreationConfig memory creationConfig = makeCreationConfig(creator, timestamp, isPremium);
+        Factory.CreationConfig memory creationConfig = makeCreationConfig(creator, timestamp, premium);
         Factory.MutableConfig memory mutableConfig = Factory.MutableConfig({mode: mode});
 
         // -- expect event fired, compute topic `data` (creationConfigs) ---
         uint256 expectedPackedCreation = (uint256(uint160(creationConfig.creator)) << 0)
-            | (creationConfig.isPremium ? (1 << 160) : 0) | (uint256(uint40(creationConfig.timestamp)) << 161);
+            | (creationConfig.premium ? (1 << 160) : 0) | (uint256(uint40(creationConfig.timestamp)) << 161);
 
         // TODO: implement checks topic 1 (create2)
         vm.expectEmit(false, true, false, true, address(factory));
@@ -130,12 +130,12 @@ contract FactoryTest is Test {
         config = Factory.MutableConfig({mode: validModuleCreationMode()});
     }
 
-    function makeCreationConfig(address creator, uint256 timestamp, bool isPremium)
+    function makeCreationConfig(address creator, uint256 timestamp, bool premium)
         private
         pure
         returns (Factory.CreationConfig memory config)
     {
-        config = Factory.CreationConfig({creator: creator, timestamp: timestamp, isPremium: isPremium});
+        config = Factory.CreationConfig({creator: creator, timestamp: timestamp, premium: premium});
     }
 
     function mockCreationConfig() private pure returns (Factory.CreationConfig memory config) {
@@ -144,15 +144,15 @@ contract FactoryTest is Test {
         uint256 timestamp = uint256(keccak256("mock_timestamp"));
 
         // alternate true/false in a deterministic way (or just fix one)
-        bool isPremium = (uint256(keccak256("mock_premium_seed")) & 1 == 0);
+        bool premium = (uint256(keccak256("mock_premium_seed")) & 1 == 0);
 
-        config = makeCreationConfig(creator, timestamp, isPremium);
+        config = makeCreationConfig(creator, timestamp, premium);
     }
 
     // generates module with params
-    function spawnModule(address creator, uint256 timestamp, bool isPremium, uint8 mode) internal returns (address) {
+    function spawnModule(address creator, uint256 timestamp, bool premium, uint8 mode) internal returns (address) {
         return
-            factory.createModule(makeCreationConfig(creator, timestamp, isPremium), Factory.MutableConfig({mode: mode}));
+            factory.createModule(makeCreationConfig(creator, timestamp, premium), Factory.MutableConfig({mode: mode}));
     }
 
     // generates module mocks all except mode

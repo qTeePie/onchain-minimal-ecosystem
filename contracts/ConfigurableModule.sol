@@ -38,11 +38,12 @@ pragma solidity ^0.8.28;
 // Factory will deploy tiny proxies pointing to this logic contract.
 // Registry will track owners + configs externally to keep clones dumb & cheap.
 contract ConfigurableModule {
+    uint256 public creationConfig; // config set at birth
+    uint256 public mutableConfig; // mutable configs
+
     address public controller;
     uint256 public index;
-
-    uint256 public immutable creationConfig; // immutable config set at birth
-    uint256 public mutableConfig; // mutable configs, slot 0 (immutable variable creationConfig does not affect storage layout)
+    bool private initialized; // later for eip-1167 compliance
 
     enum Mode {
         OFF, // 0
@@ -51,16 +52,32 @@ contract ConfigurableModule {
 
     }
 
-    constructor(uint256 _creationConfig, uint256 _mutableConfig, uint256 _index, address _controller) {
+    modifier onlyController() {
+        require(msg.sender == controller, "not controller");
+        _;
+    }
+
+    function initialize(uint256 _creationConfig, uint256 _mutableConfig, uint256 _index, address _controller)
+        external
+    {
+        require(!initialized, "already init");
+        require(msg.sender == controller, "not controller");
+
         index = _index;
         controller = _controller;
 
         creationConfig = _creationConfig;
         mutableConfig = _mutableConfig;
+
+        initialized = true;
+    }
+
+    constructor() {
+        controller = msg.sender; // temporary ownership to factory
     }
 
     // to keep bytecode small, explicit pause(), restart(), disable() are implemented in registry
-    function updateMode(uint256 newMode) external {
+    function updateMode(uint256 newMode) external onlyController {
         require(newMode <= 3, "Mode too big"); // max for 2 bits
 
         // Clear existing mode bits
@@ -70,7 +87,6 @@ contract ConfigurableModule {
         mutableConfig |= newMode; // mode goes at offset 0
     }
 
-    // NOTE: Only works for mutable configs
     function readStorageSlot(uint256 slot) external view returns (bytes32 value) {
         require(slot == 0, "Only config slot allowed");
         assembly {

@@ -8,9 +8,9 @@ interface IRegistry {
     // -----------------------
 
     event ModuleRegistered(address indexed module, address indexed creator, uint256 index);
-    event ModuleOwnershipTransferred(address indexed module, address indexed oldOwner, address indexed newOwner);
-    event ModuleDisabled(address indexed module);
-    event RegistryPaused(bool status);
+    // event ModuleOwnershipTransferred(address indexed module, address indexed oldOwner, address indexed newOwner);
+    // event ModuleDisabled(address indexed module);
+    // event RegistryPaused(bool status);
 
     // -----------------------
     // CORE REGISTRY FUNCTIONS
@@ -19,6 +19,7 @@ interface IRegistry {
     /// @notice Called by Factory after deployment (or manually by creator in decoupled mode)
     function registerModule(address module, address creator) external;
 
+    /*
     /// @notice Returns the creator/owner of a given module
     function moduleOwner(address module) external view returns (address);
 
@@ -46,4 +47,5 @@ interface IRegistry {
 
     /// @notice Pauses all registry activity (emergency switch)
     function setPaused(bool status) external;
+    */
 }

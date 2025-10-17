@@ -47,7 +47,7 @@ contract Factory {
     /// `creationConfig` = locked in at birth
     struct CreationConfig {
         address creator;
-        bool isPremium;
+        bool premium;
         uint256 timestamp;
     }
 
@@ -68,31 +68,29 @@ contract Factory {
 
     function createModule(CreationConfig calldata creationConfig, MutableConfig calldata mutableConfig)
         external
-        returns (address module)
+        returns (address)
     {
         // module cannot be spawned in an OFF state
         require(mutableConfig.mode != 0, "Invalid mode");
 
         uint256 packedCreation = (uint256(uint160(creationConfig.creator)) << 0)
-            | (creationConfig.isPremium ? (1 << 160) : 0) | (uint256(uint40(creationConfig.timestamp)) << 161);
-
+            | (creationConfig.premium ? (1 << 160) : 0) | (uint256(uint40(creationConfig.timestamp)) << 161);
         uint256 packedMutable = (uint256(mutableConfig.mode) << 0);
 
-        ConfigurableModule deployed =
-            new ConfigurableModule(packedCreation, packedMutable, modules.length, address(registry));
+        bytes32 _salt = keccak256(abi.encodePacked(msg.sender, modules.length));
+        ConfigurableModule deployed = new ConfigurableModule{salt: _salt}();
+
+        deployed.initialize(packedCreation, packedMutable, modules.length, address(registry));
+
+        // registry.registerModule(address(deployed), msg.sender);
+        emit ModuleCreated(address(deployed), moduleCount(), packedCreation);
+
         modules.push(address(deployed));
 
-        // TODO: 💌 tell the registry (insert IRegistry in constructor later)
-        //registry.registerModule(address(newModule), msg.sender);
-
-        emit ModuleCreated(address(deployed), moduleCount() - 1, packedCreation);
-
-        module = address(deployed);
+        return address(deployed);
     }
 
     function moduleCount() public view returns (uint256) {
         return modules.length;
     }
-
-    //function getByteCode(address registry) {}
 }
