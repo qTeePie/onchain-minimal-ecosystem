@@ -33,10 +33,8 @@ pragma solidity ^0.8.28;
     This module is designed to be registry-owned. 
 */
 
-// TODO: ❗ implement registry as owner
-// TODO: ❗Switch to minimal proxy pattern (EIP-1167)
-// Factory will deploy tiny proxies pointing to this logic contract.
-// Registry will track owners + configs externally to keep clones dumb & cheap.
+// ❗ TODO: Implement registry as owner
+// ❗ TODO: Switch to minimal proxy pattern (EIP-1167)
 contract ConfigurableModule {
     uint256 public creationConfig; // config set at birth
     uint256 public mutableConfig; // mutable configs
@@ -103,4 +101,17 @@ contract ConfigurableModule {
     function getMode() public view returns (Mode) {
         return Mode(mutableConfig & 0x3);
     }
+
+    /* ❗ TODO: implement RBAC so only owner (not controller) can call destroy() 
+    function destroy() external onlyOwner {
+    // emit event BEFORE selfdestruct
+    emit AboutToDie(address(this), msg.sender);
+
+    // notify registry BEFORE selfdestruct
+    IRegistry(controller).onModuleDestroyed(address(this));
+
+    // then selfdestruct
+    selfdestruct(payable(msg.sender));
+    }
+    */
 }

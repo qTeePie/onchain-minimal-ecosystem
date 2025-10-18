@@ -69,17 +69,18 @@ contract Factory {
         // module cannot be spawned in an OFF state
         require(mutableConfig.mode != 0, "Invalid mode");
 
+        uint256 index = moduleCount();
         uint256 packedCreation = (uint256(uint160(creationConfig.creator)) << 0)
             | (creationConfig.premium ? (1 << 160) : 0) | (uint256(uint40(creationConfig.timestamp)) << 161);
         uint256 packedMutable = (uint256(mutableConfig.mode) << 0);
 
-        bytes32 _salt = keccak256(abi.encodePacked(msg.sender, modules.length));
+        bytes32 _salt = keccak256(abi.encodePacked(creationConfig.creator, index));
         ConfigurableModule deployed = new ConfigurableModule{salt: _salt}();
 
         deployed.initialize(packedCreation, packedMutable, modules.length, address(registry));
 
         // registry.registerModule(address(deployed), msg.sender);
-        emit ModuleCreated(address(deployed), moduleCount(), packedCreation);
+        emit ModuleCreated(address(deployed), index, packedCreation);
         modules.push(address(deployed));
 
         return address(deployed);

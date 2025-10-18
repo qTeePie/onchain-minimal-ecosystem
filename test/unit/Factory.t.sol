@@ -6,6 +6,8 @@ import "forge-std/Test.sol";
 // locals
 import {Factory} from "../../contracts/Factory.sol";
 import {RegistryMock} from "../mocks/RegistryMock.sol";
+// for create2 bytecode
+import {ConfigurableModule} from "../../contracts/ConfigurableModule.sol";
 
 contract FactoryTest is Test {
     uint8 constant MODE_COUNT = 3; // OFF, LIVE, PAUSED
@@ -71,6 +73,26 @@ contract FactoryTest is Test {
         assertEq(moduleAddr, factory.modules(expectedIndex));
     }
 
+    function testCreate2AddressComputationWorks() external {
+        // --- mock salt params ---
+        Factory.CreationConfig memory creationConfig = mockCreationConfig();
+        uint256 index = factory.moduleCount();
+
+        // --- compute predicted salt + module creationCode ---
+        bytes32 predictedSalt = keccak256(abi.encodePacked(creationConfig.creator, index));
+        bytes memory bytecode = type(ConfigurableModule).creationCode;
+
+        // compute predicted access
+        bytes32 hash = keccak256(abi.encodePacked(bytes1(0xff), address(factory), predictedSalt, keccak256(bytecode)));
+        address predictedAddr = address(uint160(uint256(hash)));
+
+        // -- spawn module
+        Factory.MutableConfig memory mutableConfig = mockMutableConfig();
+        address deployed = spawnModule(creationConfig, mutableConfig);
+
+        assertEq(predictedAddr, deployed);
+    }
+
     function testCreateModuleCreationRevertsOnInvalidMode() external {
         // --- Init invalid  ---
         uint8 invalidMode = invalidModuleCreationMode();
@@ -106,13 +128,6 @@ contract FactoryTest is Test {
         // assert: event index matches array index
     }
 
-    /*//////////////////////////////////////////////////////////////
-                                REGISTRY
-    //////////////////////////////////////////////////////////////*/
-    function testModuleDisabledEvent() external {
-        // placeholder — once you implement disable()
-    }
-
     // -----------------------
     // 🔧 PRIVATE HELPERS
     // -----------------------
@@ -143,25 +158,24 @@ contract FactoryTest is Test {
         // generate a pseudo address & timestamp from seed
         address creator = address(uint160(uint256(keccak256("mock_owner_seed"))));
         uint256 timestamp = uint256(keccak256("mock_timestamp"));
-
-        // alternate true/false in a deterministic way (or just fix one)
         bool premium = (uint256(keccak256("mock_premium_seed")) & 1 == 0);
 
         config = makeCreationConfig(creator, timestamp, premium);
     }
 
-    // generates module with params
-    function spawnModule(address creator, uint256 timestamp, bool premium, uint8 mode) internal returns (address) {
-        return
-            factory.createModule(makeCreationConfig(creator, timestamp, premium), Factory.MutableConfig({mode: mode}));
+    function spawnModule(Factory.CreationConfig memory creationConfig, Factory.MutableConfig memory mutableConfig)
+        internal
+        returns (address)
+    {
+        return factory.createModule(creationConfig, mutableConfig);
     }
 
-    // generates module mocks all except mode
+    // spawns module, mocks all params except mode
     function spawnModule(uint8 mode) internal returns (address) {
         return factory.createModule(mockCreationConfig(), Factory.MutableConfig({mode: mode}));
     }
 
-    //  generates some configurable module
+    // spawns module, mocks all params
     function spawnModule() internal returns (address moduleAddr) {
         Factory.CreationConfig memory creationConfig = mockCreationConfig();
         Factory.MutableConfig memory mutableConfig = mockMutableConfig();
