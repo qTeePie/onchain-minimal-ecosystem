@@ -1,4 +1,4 @@
-/*import {IRegistry} from "../../contracts/interfaces/IRegistry.sol";
+import {IRegistry} from "../../contracts/interfaces/IRegistry.sol";
 
 contract RegistryMock is IRegistry {
     address public lastModule;
@@ -8,4 +8,9 @@ contract RegistryMock is IRegistry {
         lastModule = module;
         lastCaller = caller;
     }
-}*/
+
+    function moduleOwner(address module) external view returns (address) {
+        if (module == lastModule) return lastCaller;
+        return address(0);
+    }
+}

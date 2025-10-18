@@ -5,14 +5,14 @@ pragma solidity ^0.8.28;
 import "forge-std/Test.sol";
 // locals
 import {Factory} from "../../contracts/Factory.sol";
-import {IRegistry} from "../../contracts/interfaces/IRegistry.sol";
+import {RegistryMock} from "../mocks/RegistryMock.sol";
 
 contract FactoryTest is Test {
     uint8 constant MODE_COUNT = 3; // OFF, LIVE, PAUSED
     uint8 constant MODE_COUNT_INVALIDS = 1; // OFF
 
     // registry will own the factory
-    IRegistry registryMock = IRegistry(makeAddr("registry")); // temporary placeholder for mock
+    RegistryMock registryMock; // temporary placeholder for mock
     Factory factory;
 
     // Prevents VSCode false errors
@@ -23,6 +23,7 @@ contract FactoryTest is Test {
                            SETUP + DEPLOYMENT
     //////////////////////////////////////////////////////////////*/
     function setUp() external {
+        registryMock = new RegistryMock();
         factory = new Factory(registryMock);
     }
 

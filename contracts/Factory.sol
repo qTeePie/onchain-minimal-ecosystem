@@ -40,10 +40,6 @@ contract Factory {
     IRegistry public registry;
     address[] public modules; // tracks addresses
 
-    // -----------------------
-    // CONFIG
-    // -----------------------
-
     /// `creationConfig` = locked in at birth
     struct CreationConfig {
         address creator;
@@ -56,16 +52,16 @@ contract Factory {
         uint8 mode;
     }
 
-    // -----------------------
-    // EVENTS
-    // -----------------------
     event ModuleCreated(address indexed module, uint256 indexed index, uint256 data);
     event ModuleDisabled(address indexed module, uint256 indexed index);
 
     constructor(IRegistry _registry) {
-        registry = _registry; // 💅 plug in the registry at deploy time
+        registry = _registry;
     }
 
+    // -----------------------
+    // EXTERNAL
+    // -----------------------
     function createModule(CreationConfig calldata creationConfig, MutableConfig calldata mutableConfig)
         external
         returns (address)
@@ -84,12 +80,14 @@ contract Factory {
 
         // registry.registerModule(address(deployed), msg.sender);
         emit ModuleCreated(address(deployed), moduleCount(), packedCreation);
-
         modules.push(address(deployed));
 
         return address(deployed);
     }
 
+    // -----------------------
+    // VIEW
+    // -----------------------
     function moduleCount() public view returns (uint256) {
         return modules.length;
     }

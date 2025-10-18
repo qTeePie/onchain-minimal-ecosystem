@@ -19,10 +19,10 @@ interface IRegistry {
     /// @notice Called by Factory after deployment (or manually by creator in decoupled mode)
     function registerModule(address module, address creator) external;
 
-    /*
     /// @notice Returns the creator/owner of a given module
     function moduleOwner(address module) external view returns (address);
 
+    /*
     /// @notice Allows transferring ownership of a specific module
     function transferModuleOwnership(address module, address newOwner) external;
 

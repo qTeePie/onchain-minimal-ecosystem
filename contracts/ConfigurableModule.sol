@@ -57,6 +57,13 @@ contract ConfigurableModule {
         _;
     }
 
+    constructor() {
+        controller = msg.sender; // temporary ownership to factory
+    }
+
+    // -----------------------
+    // EXTERNAL
+    // -----------------------
     function initialize(uint256 _creationConfig, uint256 _mutableConfig, uint256 _index, address _controller)
         external
     {
@@ -72,11 +79,7 @@ contract ConfigurableModule {
         initialized = true;
     }
 
-    constructor() {
-        controller = msg.sender; // temporary ownership to factory
-    }
-
-    // to keep bytecode small, explicit pause(), restart(), disable() are implemented in registry
+    // explicit pause(), restart(), disable() are implemented in registry
     function updateMode(uint256 newMode) external onlyController {
         require(newMode <= 3, "Mode too big"); // max for 2 bits
 
@@ -87,6 +90,9 @@ contract ConfigurableModule {
         mutableConfig |= newMode; // mode goes at offset 0
     }
 
+    // -----------------------
+    // VIEW
+    // -----------------------
     function readStorageSlot(uint256 slot) external view returns (bytes32 value) {
         require(slot == 0, "Only config slot allowed");
         assembly {
