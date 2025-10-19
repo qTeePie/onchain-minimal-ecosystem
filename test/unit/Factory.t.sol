@@ -6,15 +6,14 @@ import "forge-std/Test.sol";
 // locals
 import {Factory} from "../../contracts/Factory.sol";
 import {RegistryMock} from "../mocks/RegistryMock.sol";
-// for create2 bytecode
+// for create2 cfBytecode
 import {ConfigurableModule} from "../../contracts/ConfigurableModule.sol";
 
 contract FactoryTest is Test {
     uint8 constant MODE_COUNT = 3; // OFF, LIVE, PAUSED
     uint8 constant MODE_COUNT_INVALIDS = 1; // OFF
 
-    // registry will own the factory
-    RegistryMock registryMock; // temporary placeholder for mock
+    RegistryMock registryMock;
     Factory factory;
 
     // Prevents VSCode false errors
@@ -49,7 +48,7 @@ contract FactoryTest is Test {
         Factory.CreationConfig memory creationConfig = makeCreationConfig(creator, timestamp, premium);
         Factory.MutableConfig memory mutableConfig = Factory.MutableConfig({mode: mode});
 
-        // -- expect event fired, compute topic `data` (creationConfigs) ---
+        // -- expect event fired, compute expected topics ---
         uint256 expectedPackedCreation = (uint256(uint160(creationConfig.creator)) << 0)
             | (creationConfig.premium ? (1 << 160) : 0) | (uint256(uint40(creationConfig.timestamp)) << 161);
 
@@ -80,17 +79,25 @@ contract FactoryTest is Test {
 
         // --- compute predicted salt + module creationCode ---
         bytes32 predictedSalt = keccak256(abi.encodePacked(creationConfig.creator, index));
-        bytes memory bytecode = type(ConfigurableModule).creationCode;
+        bytes memory cfBytecode = type(ConfigurableModule).creationCode;
 
-        // compute predicted access
-        bytes32 hash = keccak256(abi.encodePacked(bytes1(0xff), address(factory), predictedSalt, keccak256(bytecode)));
+        // --- compute predicted address ---
+        bytes32 hash = keccak256(abi.encodePacked(bytes1(0xff), address(factory), predictedSalt, keccak256(cfBytecode)));
         address predictedAddr = address(uint160(uint256(hash)));
 
-        // -- spawn module
+        // --- spawn module ---
         Factory.MutableConfig memory mutableConfig = mockMutableConfig();
         address deployed = spawnModule(creationConfig, mutableConfig);
 
+        // --- deployed address same as prediction ? ---
         assertEq(predictedAddr, deployed);
+
+        // --- deployed contract has runtime bytecode ? ---
+        uint256 actualAddrBytecodeSize;
+        assembly {
+            actualAddrBytecodeSize := extcodesize(deployed)
+        }
+        assertGt(actualAddrBytecodeSize, 0, "no code deployed");
     }
 
     function testCreateModuleCreationRevertsOnInvalidMode() external {
