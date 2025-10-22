@@ -4,7 +4,7 @@ pragma solidity ^0.8.28;
 import {IRegistry} from "./interfaces/IRegistry.sol";
 import {ConfigurableModule} from "./ConfigurableModule.sol";
 
-// type declarations (e.g. using Address for address)
+// type declarations
 // state vars
 
 // events
@@ -37,9 +37,6 @@ This factory uses a decoupled design — registry syncs via events instead of di
 */
 
 contract Factory {
-    IRegistry public registry;
-    address[] public modules; // tracks addresses
-
     /// `creationConfig` = locked in at birth
     struct CreationConfig {
         address creator;
@@ -51,6 +48,9 @@ contract Factory {
     struct MutableConfig {
         uint8 mode;
     }
+
+    IRegistry public registry;
+    address[] public modules; // tracks addresses
 
     event ModuleCreated(address indexed module, uint256 indexed index, uint256 data);
     event ModuleDisabled(address indexed module, uint256 indexed index);

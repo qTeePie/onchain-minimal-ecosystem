@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-// type declarations (e.g. using Address for address)
+// type declarations
 // state vars
 
 // events
@@ -36,19 +36,19 @@ pragma solidity ^0.8.28;
 // ❗ TODO: Implement registry as owner
 // ❗ TODO: Switch to minimal proxy pattern (EIP-1167)
 contract ConfigurableModule {
-    uint256 public creationConfig; // config set at birth
-    uint256 public mutableConfig; // mutable configs
-
-    address public controller;
-    uint256 public index;
-    bool private initialized; // later for eip-1167 compliance
-
     enum Mode {
         OFF, // 0
         LIVE, // 1
         PAUSED // 2
 
     }
+
+    uint256 public creationConfig; // config set at birth
+    uint256 public mutableConfig; // mutable configs
+
+    address public controller;
+    uint256 public index;
+    bool private initialized; // later for eip-1167 compliance
 
     modifier onlyController() {
         require(msg.sender == controller, "not controller");
