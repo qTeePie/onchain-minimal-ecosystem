@@ -52,6 +52,7 @@ contract Factory {
     IRegistry public registry;
     address[] public modules; // tracks addresses
 
+    // ❗ TODO: remember to have the registry call its own "registered" event when called from factory after module creation
     event ModuleCreated(address indexed module, uint256 indexed index, uint256 data);
     event ModuleDisabled(address indexed module, uint256 indexed index);
 
