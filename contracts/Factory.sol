@@ -17,25 +17,6 @@ import {ConfigurableModule} from "./ConfigurableModule.sol";
 // - internal
 // - private
 
-/*
-🏗️ Factory + Registry Patterns
-
-1️⃣ Coupled:
-- Factory calls Registry directly after each deployment.
-- Always in sync (auto-registers new modules).
-- Simpler, but tighter link between contracts.
-
-2️⃣ Decoupled:
-- Factory only emits events; Registry (or off-chain indexer)
-  listens and updates separately.
-- Looser coupling, easier upgrades, but needs manual sync.
-
-💡 Use coupled for on-chain coordinatii just on, decoupled for flexibility.
-
-This factory uses a decoupled design — registry syncs via events instead of direct calls.
-
-*/
-
 contract Factory {
     /// `creationConfig` = locked in at birth
     struct CreationConfig {
